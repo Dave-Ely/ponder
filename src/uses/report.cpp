@@ -221,7 +221,7 @@ static void reportTo(Reporter &rep)
     auto nbClasses = clmgr.count();
     
     ReportVisitor repVis(rep);
-    for (auto ci = 0; ci < nbClasses; ++ci)
+    for (size_t ci = 0; ci < nbClasses; ++ci)
     {
         auto const& cls = clmgr.getByIndex(ci);
         rep.open("Class");
