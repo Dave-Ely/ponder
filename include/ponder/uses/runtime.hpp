@@ -57,7 +57,7 @@ template <>
 struct ArgsBuilder<Args> { static Args makeArgs(const Args& args) { return args; } };
 
 template <>
-struct ArgsBuilder<void> { static Args makeArgs(const Args& args) { return Args::empty; } };
+struct ArgsBuilder<void> { static Args makeArgs([[maybe_unused]] const Args& args) { return Args::empty; } };
 
     
 struct UserObjectDeleter {

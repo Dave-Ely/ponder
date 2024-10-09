@@ -45,21 +45,28 @@ void serialize(const UserObject& object, typename Proxy::NodeType node, const Va
         const Property& property = metaclass.property(i);
 
         // If the property has the exclude tag, ignore it
-        if ((exclude != Value::nothing) && property.hasTag(exclude))
-            continue;
+//         if ((exclude != Value::nothing) && property.hasTag(exclude))
+//             continue;
 
-        // Create a child node for the new property
-        typename Proxy::NodeType child = Proxy::addChild(node, property.name());
-        if (!Proxy::isValid(child))
-            continue;
+        if (Proxy::exclude(object, property, exclude))
+          continue;
 
-        if (property.kind() == userType)
+
+        if (property.kind() == ValueKind::User)
         {
+            // Create a child node for the new property
+            typename Proxy::NodeType child = Proxy::addChild(node, property.name());
+            if (!Proxy::isValid(child))
+              continue;
             // The current property is a composed type: serialize it recursively
             serialize<Proxy>(property.get(object).to<UserObject>(), child, exclude);
         }
-        else if (property.kind() == arrayType)
+        else if (property.kind() == ValueKind::Array)
         {
+            // Create a child node for the new property
+            typename Proxy::NodeType child = Proxy::addChild(node, property.name());
+            if (!Proxy::isValid(child))
+              continue;
             // The current property is an array
             const ArrayProperty& arrayProperty = static_cast<const ArrayProperty&>(property);
 
@@ -71,7 +78,7 @@ void serialize(const UserObject& object, typename Proxy::NodeType node, const Va
                 typename Proxy::NodeType item = Proxy::addChild(child, "item");
                 if (Proxy::isValid(item))
                 {
-                    if (arrayProperty.elementType() == userType)
+                    if (arrayProperty.elementType() == ValueKind::User)
                     {
                         // The array elements are composed objects: serialize them recursively
                         serialize<Proxy>(arrayProperty.get(object, j).to<UserObject>(), item, exclude);
@@ -87,7 +94,7 @@ void serialize(const UserObject& object, typename Proxy::NodeType node, const Va
         else
         {
             // The current property is a simple property: write its value as the node's text
-            Proxy::setText(child, property.get(object));
+            Proxy::setAttribute(node, property.name(), property.get(object));
         }
     }
 }
@@ -105,18 +112,22 @@ void deserialize(const UserObject& object, typename Proxy::NodeType node, const 
         if ((exclude != Value::nothing) && property.hasTag(exclude))
             continue;
 
-        // Find the child node corresponding to the new property
-        typename Proxy::NodeType child = Proxy::findFirstChild(node, property.name());
-        if (!Proxy::isValid(child))
-            continue;
 
-        if (property.kind() == userType)
+        if (property.kind() == ValueKind::User)
         {
+            // Find the child node corresponding to the new property
+            typename Proxy::NodeType child = Proxy::findFirstChild(node, property.name());
+            if (!Proxy::isValid(child))
+              continue;
             // The current property is a composed type: deserialize it recursively
             deserialize<Proxy>(property.get(object).to<UserObject>(), child, exclude);
         }
-        else if (property.kind() == arrayType)
+        else if (property.kind() == ValueKind::Array)
         {
+            // Find the child node corresponding to the new property
+            typename Proxy::NodeType child = Proxy::findFirstChild(node, property.name());
+            if (!Proxy::isValid(child))
+              continue;
             // The current property is an array
             const ArrayProperty& arrayProperty = static_cast<const ArrayProperty&>(property);
 
@@ -136,7 +147,7 @@ void deserialize(const UserObject& object, typename Proxy::NodeType node, const 
                         break;
                 }
 
-                if (arrayProperty.elementType() == userType)
+                if (arrayProperty.elementType() == ValueKind::User)
                 {
                     // The array elements are composed objects: deserialize them recursively
                     deserialize<Proxy>(arrayProperty.get(object, index).to<UserObject>(), item, exclude);
@@ -153,7 +164,9 @@ void deserialize(const UserObject& object, typename Proxy::NodeType node, const 
         else
         {
             // The current property is a simple property: read its value from the node's text
-            property.set(object, Proxy::getText(child));
+            std::string text;
+            Proxy::getAttribute(node, property.name(), text);
+            property.set(object, text);
         }
     }
 }

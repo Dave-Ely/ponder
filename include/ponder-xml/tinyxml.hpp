@@ -48,6 +48,17 @@ struct TinyXml
 {
     typedef TiXmlElement* NodeType;
 
+    static bool exclude(const UserObject& userObject, const Property& property, const Value& exclude)
+    {
+      // If the property has the exclude tag, ignore it
+      if ((exclude != Value::nothing) && property.hasTag(exclude))
+      {
+        if (property.tag(exclude, userObject).to<bool>() == true)
+          return true;
+      }
+      return false;
+    }
+
     static NodeType addChild(NodeType node, const std::string& name)
     {
         return static_cast<NodeType>(node->InsertEndChild(TiXmlElement(name.c_str())));
@@ -66,6 +77,16 @@ struct TinyXml
     static NodeType findNextSibling(NodeType node, const std::string& name)
     {
         return node->NextSiblingElement(name.c_str());
+    }
+
+    static void setAttribute(NodeType node, const std::string& field, const std::string& text)
+    {
+      node->SetAttribute(field.c_str(), text.c_str());
+    }
+
+    static void getAttribute(NodeType node, const std::string& field, std::string& text)
+    {
+      text = node->Attribute(field.c_str());
     }
 
     static std::string getText(NodeType node)
